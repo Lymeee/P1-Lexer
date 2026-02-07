@@ -14,8 +14,8 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            if (peek("\\s")) {
-                match("\\s");
+            if (peek("[ \\n\\r\\t\\u0008]")) {
+                match("[ \\n\\r\\t\\u0008]");
                 continue;
             }
             tokens.add(lexToken());
@@ -73,7 +73,7 @@ public final class Lexer {
             return chars.emit(Token.Type.DECIMAL);
         } else {
             if (digitCount > 1 && firstDigit == '0') {
-                throw new ParseException("Leading zeros are not allowed in integer literals.", chars.index);
+                throw new ParseException("Leading zeros are not allowed.", chars.index);
             }
             return chars.emit(Token.Type.INTEGER);
         }
@@ -81,7 +81,7 @@ public final class Lexer {
 
     public Token lexCharacter() {
         if (!match("'")) {
-            throw new ParseException("Character literal must start with a single quote.", chars.index);
+            throw new ParseException("Invalid character literal.", chars.index);
         }
 
         if (!chars.has(0)) {
@@ -99,7 +99,7 @@ public final class Lexer {
         }
 
         if (!match("'")) {
-            throw new ParseException("Unterminated or too-long character literal.", chars.index);
+            throw new ParseException("Unterminated character literal.", chars.index);
         }
 
         return chars.emit(Token.Type.CHARACTER);
@@ -107,7 +107,7 @@ public final class Lexer {
 
     public Token lexString() {
         if (!match("\"")) {
-            throw new ParseException("String literal must start with a quote.", chars.index);
+            throw new ParseException("Invalid string literal.", chars.index);
         }
 
         while (true) {
@@ -125,7 +125,7 @@ public final class Lexer {
             } else {
                 char c = chars.get(0);
                 if (c == '\n' || c == '\r') {
-                    throw new ParseException("String literal cannot contain newline.", chars.index);
+                    throw new ParseException("Unterminated string literal.", chars.index);
                 }
                 if (c == '\\') {
                     throw new ParseException("Invalid escape sequence.", chars.index);
@@ -139,11 +139,11 @@ public final class Lexer {
 
     public void lexEscape() {
         if (!match("\\\\")) {
-            throw new ParseException("Expected start of escape sequence.", chars.index);
+            throw new ParseException("Invalid escape.", chars.index);
         }
 
         if (!chars.has(0)) {
-            throw new ParseException("Unterminated escape sequence.", chars.index);
+            throw new ParseException("Invalid escape.", chars.index);
         }
 
         char c = chars.get(0);
@@ -158,7 +158,7 @@ public final class Lexer {
                 chars.advance();
                 break;
             default:
-                throw new ParseException("Invalid escape sequence: \\" + c, chars.index);
+                throw new ParseException("Invalid escape.", chars.index);
         }
     }
 
@@ -168,7 +168,7 @@ public final class Lexer {
             match("=");
         } else {
             if (!chars.has(0)) {
-                throw new ParseException("Unexpected end of input in operator.", chars.index);
+                throw new ParseException("Invalid operator.", chars.index);
             }
             chars.advance();
         }
@@ -231,3 +231,4 @@ public final class Lexer {
         }
     }
 }
+
